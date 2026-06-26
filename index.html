@@ -1,11 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Niranthak Store management</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Generator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.07);
+      padding: 30px;
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 26px;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #6366f1;
+    }
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-download {
+      background: #10b981;
+      color: #ffffff;
+    }
+    .qr-panel {
+      margin-top: 28px;
+      padding: 24px;
+      border: 1px dashed #d1d5db;
+      border-radius: 18px;
+      text-align: center;
+      background: #fafbff;
+    }
+    .qr-placeholder {
+      color: #6b7280;
+      font-size: 15px;
+      margin-top: 12px;
+    }
+  </style>
 </head>
 <body>
-    <h1>For now... Its just Nothing......</h1>
+  <div class="card">
+    <h1>QR Code Generator</h1>
+    <label for="urlInput">Input URL</label>
+    <input id="urlInput" type="text" placeholder="Enter a URL here" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+    <div class="button-row">
+      <button id="generateBtn" class="btn-primary">Generate</button>
+      <button id="randomBtn" class="btn-secondary">Random</button>
+      <button id="downloadBtn" class="btn-download">Download</button>
+    </div>
+    <div class="qr-panel">
+      <div id="qrCode"></div>
+      <div id="qrText" class="qr-placeholder">Your QR code will appear here after generation.</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    const input = document.getElementById('urlInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const qrCodeContainer = document.getElementById('qrCode');
+    const qrText = document.getElementById('qrText');
+
+    const randomUrls = [
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://www.youtube.com/watch?v=fC7oUOUEEi4',
+      'https://www.youtube.com/watch?v=Nk5XLCvGi9E&list=RDNk5XLCvGi9E'
+    ];
+
+    let qrCode = null;
+
+    function renderQRCode(text) {
+      qrCodeContainer.innerHTML = '';
+      qrCode = new QRCode(qrCodeContainer, {
+        text: text || ' ',
+        width: 244,
+        height: 244,
+        colorDark: '#111827',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      qrText.textContent = text ? text : 'Your QR code will appear here after generation.';
+    }
+
+    function normalizeUrl(value) {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      if (!/^https?:\/\//i.test(trimmed)) {
+        return 'https://' + trimmed;
+      }
+      return trimmed;
+    }
+
+    generateBtn.addEventListener('click', () => {
+      const url = normalizeUrl(input.value);
+      if (!url) {
+        alert('Please enter a URL before generating.');
+        return;
+      }
+      input.value = url;
+      renderQRCode(url);
+    });
+
+    randomBtn.addEventListener('click', () => {
+      const randomUrl = randomUrls[Math.floor(Math.random() * randomUrls.length)];
+      input.value = randomUrl;
+      renderQRCode(randomUrl);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!qrCode || !qrCode._el) {
+        alert('Generate a QR code first.');
+        return;
+      }
+      const img = qrCode._el.querySelector('img');
+      const canvas = qrCode._el.querySelector('canvas');
+      let dataUrl = '';
+      if (img) {
+        dataUrl = img.src;
+      } else if (canvas) {
+        dataUrl = canvas.toDataURL('image/png');
+      }
+      if (!dataUrl) {
+        alert('Unable to download the QR code. Generate it again.');
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'qr-code.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    renderQRCode(input.value);
+  </script>
 </body>
 </html>
